@@ -26,8 +26,13 @@ export class TypescriptPaddles extends Component {
     private point02: string = '0';
 
     private startGame: boolean = false
-    private positionXMouse: number 
+    private continueGame: boolean = false
+    private positionXMouse: number = NaN
     private isUp: boolean = true 
+    private isHitPaddle: boolean = true 
+    private isHitWall: boolean = true 
+    private changeX: number = NaN 
+    private changeY: number = NaN 
 
     start () {
         // [3]
@@ -62,8 +67,26 @@ export class TypescriptPaddles extends Component {
             this.isUp = false
         }
     }
-    changeDirection(x: number, y: number) {
-        this.ball.setPosition(new Vec3(this.ball.position.x + x , this.ball.position.y + y , 0))
+    changeDirection() {
+        let ballX = this.ball.getPosition().x
+        let ballY = this.ball.getPosition().y
+        this.isHitWall = ballX === 480 || ballX === -480
+        this.isHitPaddle = this.paddle01.getPosition().x < ballX  && ballX < this.paddle01.getPosition().x + 50 && ( ballY === 270 || ballY === -270 )
+        if(ballY === 320 || ballY === -320 ) {
+            let Winner = ballY === 320 ? 'bottom' : 'top'
+            this.resetGame()
+            this.getPoint(Winner)
+            alert('YOU ARE LOSER!')
+        }else if(this.isHitWall){
+            this.changeX = -this.changeX
+        this.continueGame = true
+        }else if(this.isHitPaddle) {
+            this.isUp = !this.isUp
+            this.changeY = -this.changeY
+            this.continueGame = true
+        }
+
+        this.ball.setPosition(new Vec3(ballX + this.changeX, ballY + this.changeY , 0))
         
     }
     getPoint(side:string) {
@@ -80,42 +103,25 @@ export class TypescriptPaddles extends Component {
 
     update (deltaTime: number) {
         // [4]
-
-        let isHit = this.paddle01.getPosition().x < this.ball.getPosition().x  && this.ball.getPosition().x < this.paddle01.getPosition().x + 50
-        let isHitWall = this.ball.getPosition().x === 480 || this.ball.getPosition().x === -480
-
         this.paddle01.setPosition(new Vec3(this.positionXMouse/2 - 480, 300, 0))
         this.paddle02.setPosition(new Vec3(this.positionXMouse/2 - 480, -300, 0))
-        console.log(this.ball.getPosition())
-        
-        if( isHitWall ) {
-            this.startGame = !this.startGame
-            this.changeDirection(-2, -2)
 
+        if(this.startGame && this.continueGame) {
+            this.changeDirection()
         }else if(this.startGame && this.isUp) {
-            this.changeDirection(2, 2)
-            if(this.ball.getPosition().y === 320){
-                this.resetGame()
-                this.getPoint('bottom')
-            }else if(this.ball.getPosition().y === 270 && isHit) {
-                this.isUp = !this.isUp
-                console.log('pong')
-                this.changeDirection(2, -2)
-
-            }
+            this.changeX = 2
+            this.changeY = 2
+            this.changeDirection()
 
         }else if(this.startGame && !this.isUp) {
-            this.changeDirection(2, -2)
-            if(this.ball.getPosition().y===-320){
-                this.resetGame()
-                this.getPoint('top')
-            }else if(this.ball.getPosition().y === -270 && isHit) {
-                this.isUp = !this.isUp
-                console.log('pong')
-                this.changeDirection(2, 2)
-
-            }
+            this.changeX = 2
+            this.changeY = -2
+            this.changeDirection()
+        }else {
+            this.resetGame()
         }
+
+       
 
     }
 }
